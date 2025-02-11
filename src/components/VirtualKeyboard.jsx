@@ -5,13 +5,13 @@ const { Title } = Typography;
 
 
 
-export default function VirtualKeyboard({ targetKey, keyboardHk, useKeyboardSide, keyboardTop,keyboardSide }) {
+export default function VirtualKeyboard({ targetKey, keyboardHk, useKeyboardSide, keyboardTop, keyboardSide, keyPressed }) {
 
 
     return (
         <>
 
-
+            {keyPressed}
 
             <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", padding: "0 20px", margin: "auto 0 0 0", minHeight: "30%" }}>
                 <Row justify="center" gutter={[10, 10]}>
@@ -26,23 +26,35 @@ export default function VirtualKeyboard({ targetKey, keyboardHk, useKeyboardSide
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     borderRadius: 10,
+
+                                    // Логика подсветки
                                     backgroundColor:
-                                        (targetKey === key && keyboardHk === "keyboardTop")
-                                            ? 'rgba(0, 255, 0, 0.3)'
-                                            : 'rgba(255, 255, 255, 0.1)',
+                                        key === targetKey && keyboardHk === "keyboardTop"  // Подсветка нужной клавиши
+                                            ? 'rgba(0, 255, 0, 0.5)'  // Зелёная подсветка для нужной клавиши
+
+                                            : keyPressed === key  // Подсветка нажатой клавиши
+                                                ? (key === targetKey
+                                                    ? 'red'          // Красная, если нажата правильная клавиша
+                                                    : 'rgba(139, 0, 0, 0.5)'       // Жёлтая, если нажата неправильная клавиша
+                                                )
+
+                                                : 'rgba(255, 255, 255, 0.1)',  // Стандартный цвет для неактивных клавиш
+
                                     color: 'black',
                                     border: '1px solid rgba(255, 255, 255, 0.3)',
                                     boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
                                     backdropFilter: 'blur(8px)',
                                     WebkitBackdropFilter: 'blur(8px)',
                                     cursor: 'pointer',
-                                    transition: '0.3s',
+                                    transition: '0.3s ease-in-out',  // Плавная анимация при смене цвета
+                                    transform: keyPressed === key && key === targetKey ? 'scale(1.1)' : 'scale(1)',  // Анимация увеличения для правильного нажатия
                                 }}
                             >
                                 {key}
                             </div>
                         </Col>
                     ))}
+
                 </Row>
 
                 {useKeyboardSide && (
