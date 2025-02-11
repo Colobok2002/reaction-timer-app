@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import VirtualKeyboard from './components/VirtualKeyboard';
 import { Button, List } from 'antd';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';  // Импортируем компоненты для графика
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 // Верхняя панель клавиш
 const keyboardTop = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
@@ -10,17 +10,18 @@ const keyboardSide = [
   ['7', '8', '9'],
   ['4', '5', '6'],
   ['1', '2', '3'],
-  ['', '0', ''], // 0 по центру
+  ['', '0', ''],
 ];
 
+const COUNT_ROUND = 3;
 
-const COUNT_ROUND = 3
 function App() {
   const [targetKey, setTargetKey] = useState(null);
+  const [targetKeyKech, setTargetKeyKech] = useState(null);
   const [keyboardHk, setKeyboardHk] = useState("keyboardTop");
   const [useKeyboardSide, setUseKeyboardSide] = useState(false);
-  const [useRandomKey, setUseRandomKey] = useState(true)
-  const [keyPressed, setKeyPressed] = useState(null)
+  const [useRandomKey, setUseRandomKey] = useState(false);
+  const [keyPressed, setKeyPressed] = useState(null);
 
   const [pressedKey, setPressedKey] = useState(null);
   const [gameStarted, setGameStarted] = useState(false);
@@ -28,11 +29,12 @@ function App() {
   const [startTime, setStartTime] = useState(null);
   const [round, setRound] = useState(0);
   const [countdown, setCountdown] = useState(0);
+  const [nextRoundCountdown, setNextRoundCountdown] = useState(0);
 
   useEffect(() => {
     const handleKeyPress = (event) => {
       const keyPressed = event.key;
-      setKeyPressed(keyPressed)
+      setKeyPressed(keyPressed);
       if (keyboardTop.includes(keyPressed) || (useKeyboardSide && keyPressed.match(/[0-9]/))) {
         setPressedKey(keyPressed);
         if (keyPressed === targetKey) {
@@ -40,45 +42,67 @@ function App() {
           setReactionTimes((prev) => [...prev, { attempt: prev.length + 1, time: reactionTime }]);
 
           if (round < COUNT_ROUND - 1) {
-            setTimeout(() => highlightRandomKey(), 1000);
             setRound(round + 1);
+            setNextRoundCountdown(5);
+            setStartTime(Date.now())
           } else {
             setGameStarted(false);
-            setTargetKey(null)
-            setKeyPressed(null)
+            setTargetKey(null);
+            setKeyPressed(null);
+            setTargetKeyKech(null)
           }
-          setStartTime(Date.now());
         }
       }
     };
 
     if (gameStarted) {
+      window.addEventListener('keydown', handleKeyPress);
     }
-    window.addEventListener('keydown', handleKeyPress);
 
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [targetKey, gameStarted, round, useKeyboardSide, startTime]);
 
+  useEffect(() => {
+    if (nextRoundCountdown > 0) {
+      console.log(nextRoundCountdown)
+      if (nextRoundCountdown == 5) {
+        setTargetKey(null);
+      }
+      setTimeout(() => setNextRoundCountdown(nextRoundCountdown - 1), 1000)
+
+    } else {
+      if (gameStarted) {
+        highlightRandomKey()
+      }
+    }
+  }, [nextRoundCountdown]);
 
   const highlightRandomKey = () => {
+    setTargetKey(null);
+
     let randomKey;
     if (useKeyboardSide && Math.random() > 0.5) {
       setKeyboardHk("keyboardSide");
-
     } else {
       setKeyboardHk("keyboardTop");
     }
+
     if (useRandomKey) {
       randomKey = Math.floor(Math.random() * 10).toString();
     } else {
-      randomKey = targetKey != null ? targetKey : Math.floor(Math.random() * 10).toString();
+      randomKey = targetKeyKech != null ? targetKeyKech : Math.floor(Math.random() * 10).toString();
     }
-    setTargetKey(randomKey);
-    setPressedKey(null);
-    setStartTime(Date.now());
-    setKeyPressed(null)
-  };
 
+    setTargetKey(randomKey);
+    if (targetKeyKech == null) {
+      setTargetKeyKech(randomKey);
+    }
+    setStartTime(Date.now());
+    setKeyPressed(null);
+
+    // setTimeout(() => {
+    // }, 0);
+  };
 
   const startGame = () => {
     setReactionTimes([]);
@@ -109,6 +133,10 @@ function App() {
         <Button type={useKeyboardSide ? 'primary' : 'default'} onClick={() => setUseKeyboardSide(!useKeyboardSide)} disabled={gameStarted}>
           {useKeyboardSide ? 'Боковая панель: Включена' : 'Боковая панель: Выключена'}
         </Button>
+
+        <Button type={useRandomKey ? 'primary' : 'default'} onClick={() => setUseRandomKey(!useRandomKey)} disabled={gameStarted}>
+          {useRandomKey ? 'Случайная клавиша: Включена' : 'Случайная клавиша: Выключена'}
+        </Button>
       </div>
 
       {countdown > 0 && (
@@ -117,7 +145,12 @@ function App() {
         </div>
       )}
 
-      {/* Вывод результатов и графика */}
+      {nextRoundCountdown > 0 && (
+        <div style={{ fontSize: 24, textAlign: 'center', marginTop: 20 }}>
+          Следующий раунд через: <strong>{nextRoundCountdown}</strong> секунд
+        </div>
+      )}
+
       {reactionTimes.length > 0 && !gameStarted && (
         <div style={{ display: 'flex', marginTop: 20, gap: 20 }}>
           <div style={{ flex: 1 }}>
@@ -133,7 +166,6 @@ function App() {
             />
           </div>
 
-          {/* График справа */}
           <div style={{ flex: 1 }}>
             <h3>График времени реакции:</h3>
             <ResponsiveContainer width="100%" height={300}>
