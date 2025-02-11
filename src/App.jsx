@@ -17,7 +17,7 @@ const COUNT_ROUND = 3;
 
 function App() {
   const [targetKey, setTargetKey] = useState(null);
-  const [targetKeyKech, setTargetKeyKech] = useState(null);
+  const [targetKeyCache, setTargetKeyCache] = useState(null);
   const [keyboardHk, setKeyboardHk] = useState("keyboardTop");
   const [useKeyboardSide, setUseKeyboardSide] = useState(false);
   const [useRandomKey, setUseRandomKey] = useState(false);
@@ -49,7 +49,7 @@ function App() {
             setGameStarted(false);
             setTargetKey(null);
             setKeyPressed(null);
-            setTargetKeyKech(null)
+            setTargetKeyCache(null)
           }
         }
       }
@@ -64,7 +64,6 @@ function App() {
 
   useEffect(() => {
     if (nextRoundCountdown > 0) {
-      console.log(nextRoundCountdown)
       if (nextRoundCountdown == 5) {
         setTargetKey(null);
       }
@@ -90,18 +89,15 @@ function App() {
     if (useRandomKey) {
       randomKey = Math.floor(Math.random() * 10).toString();
     } else {
-      randomKey = targetKeyKech != null ? targetKeyKech : Math.floor(Math.random() * 10).toString();
+      randomKey = targetKeyCache != null ? targetKeyCache : Math.floor(Math.random() * 10).toString();
     }
-
     setTargetKey(randomKey);
-    if (targetKeyKech == null) {
-      setTargetKeyKech(randomKey);
+    if (targetKeyCache == null) {
+      setTargetKeyCache(randomKey);
     }
     setStartTime(Date.now());
     setKeyPressed(null);
 
-    // setTimeout(() => {
-    // }, 0);
   };
 
   const startGame = () => {
@@ -122,7 +118,7 @@ function App() {
   };
 
   return (
-    <div style={{ height: "calc(100vh - 100px)", display: "flex", flexDirection: "column", padding: 50 }}>
+    <div style={{ height: "calc(100vh - 100px)", display: "flex", flexDirection: "column", padding: 50, gap: 20 }}>
       <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 20 }}>
         <div style={{ fontSize: 20 }}>Таймер реакции</div>
 
@@ -139,17 +135,36 @@ function App() {
         </Button>
       </div>
 
-      {countdown > 0 && (
+      {(countdown > 0 || nextRoundCountdown > 0) ? (
         <div style={{ fontSize: 30, textAlign: 'center', marginTop: 20 }}>
-          Игра начнётся через: <strong>{countdown}</strong> секунд
+          {countdown > 0 && (
+            <div>
+              Игра начнётся через: <strong>{countdown}</strong> секунд
+            </div>
+          )}
+
+          {nextRoundCountdown > 0 && (
+            <div style={{ fontSize: 24 }}>
+              Следующий раунд через: <strong>{nextRoundCountdown}</strong> секунд
+            </div>
+          )}
         </div>
+      ) : (
+        <>
+          {gameStarted && (
+            <VirtualKeyboard
+              targetKey={targetKey}
+              keyboardHk={keyboardHk}
+              pressedKey={pressedKey}
+              useKeyboardSide={useKeyboardSide}
+              keyboardTop={keyboardTop}
+              keyboardSide={keyboardSide}
+              keyPressed={keyPressed}
+            />
+          )}
+        </>
       )}
 
-      {nextRoundCountdown > 0 && (
-        <div style={{ fontSize: 24, textAlign: 'center', marginTop: 20 }}>
-          Следующий раунд через: <strong>{nextRoundCountdown}</strong> секунд
-        </div>
-      )}
 
       {reactionTimes.length > 0 && !gameStarted && (
         <div style={{ display: 'flex', marginTop: 20, gap: 20 }}>
@@ -182,16 +197,8 @@ function App() {
         </div>
       )}
 
-      <VirtualKeyboard
-        targetKey={targetKey}
-        keyboardHk={keyboardHk}
-        pressedKey={pressedKey}
-        useKeyboardSide={useKeyboardSide}
-        keyboardTop={keyboardTop}
-        keyboardSide={keyboardSide}
-        keyPressed={keyPressed}
-      />
     </div>
+
   );
 }
 

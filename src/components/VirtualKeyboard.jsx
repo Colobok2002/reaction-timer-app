@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { Row, Col, Typography } from 'antd';
+import { Row, Col } from 'antd';
 
 
 const KeyButton = ({ keyValue, targetKey, keyPressed, keyboardHk, constKeyboardHk }) => {
@@ -20,7 +19,6 @@ const KeyButton = ({ keyValue, targetKey, keyPressed, keyboardHk, constKeyboardH
         return 'rgba(255, 255, 255, 0.1)';
     };
 
-    // Стиль кнопки
     const buttonStyle = {
         width: 60,
         height: 60,
@@ -51,7 +49,7 @@ export default function VirtualKeyboard({ targetKey, keyboardHk, useKeyboardSide
 
             {keyPressed}
 
-            <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", padding: "0 20px", margin: "auto 0 0 0", minHeight: "30%" }}>
+            <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", padding: "0 20px", minHeight: "30%" }}>
                 <Row justify="center" gutter={[10, 10]}>
                     {keyboardTop.map((key) => (
                         <Col key={key} gap={10}>
