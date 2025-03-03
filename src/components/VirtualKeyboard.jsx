@@ -41,15 +41,59 @@ const KeyButton = ({ keyValue, targetKey, keyPressed, keyboardHk, constKeyboardH
     return <div style={buttonStyle}>{keyValue}</div>;
 };
 
-export default function VirtualKeyboard({ targetKey, keyboardHk, useKeyboardSide, keyboardTop, keyboardSide, keyPressed }) {
+export default function VirtualKeyboard({ targetKey, keyboardHk, useKeyboardSide, keyboardTop, keyboardSide, keyPressed, useOneKeyboard }) {
 
+    if (useOneKeyboard) {
+        if (!useKeyboardSide) {
+            return (
+                <>
+                    <Row justify="center" gutter={[10, 10]}>
+                        {keyboardTop.map((key) => (
+                            <Col key={key} gap={10}>
+                                <KeyButton
+                                    keyValue={key}
+                                    targetKey={targetKey}
+                                    keyPressed={keyPressed}
+                                    keyboardHk={keyboardHk}
+                                    constKeyboardHk="keyboardTop"
+                                />
+                            </Col>
+                        ))}
+                    </Row>
+                </>
+            )
+        }
 
+        return (<>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {keyboardSide.map((row, rowIndex) => (
+                    <div key={rowIndex} style={{ display: "flex", flexDirection: "row", gap: 10 }}>
+                        {row.map((key, colIndex) => (
+                            <div key={`${rowIndex}-${colIndex}`} F>
+                                {key ? (
+                                    <KeyButton
+                                        keyValue={key}
+                                        targetKey={targetKey}
+                                        keyPressed={keyPressed}
+                                        keyboardHk={keyboardHk}
+                                        constKeyboardHk="keyboardSide"
+                                    />
+
+                                ) : (
+                                    <div style={{ width: 60, height: 60 }}></div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                ))}
+            </div>
+        </>)
+    }
     return (
         <>
 
-            {keyPressed}
-
             <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", padding: "0 20px", minHeight: "30%" }}>
+
                 <Row justify="center" gutter={[10, 10]}>
                     {keyboardTop.map((key) => (
                         <Col key={key} gap={10}>
@@ -62,8 +106,8 @@ export default function VirtualKeyboard({ targetKey, keyboardHk, useKeyboardSide
                             />
                         </Col>
                     ))}
-
                 </Row>
+
 
                 {useKeyboardSide && (
                     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -89,7 +133,6 @@ export default function VirtualKeyboard({ targetKey, keyboardHk, useKeyboardSide
                         ))}
                     </div>
                 )}
-
             </div>
         </>
     );

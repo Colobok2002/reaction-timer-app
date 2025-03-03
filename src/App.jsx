@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Badge, Button, Progress } from 'antd';
+
 import VirtualKeyboard from './components/VirtualKeyboard';
-import { Button, List } from 'antd';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import Dashboard from './components/Dashboard';
 
 // Верхняя панель клавиш
 const keyboardTop = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
+
 // Боковая панель (NumPad) в виде сетки
 const keyboardSide = [
   ['7', '8', '9'],
@@ -14,16 +16,20 @@ const keyboardSide = [
 ];
 
 const COUNT_ROUND = 3;
+const DELAY_NEXT_ROUND = 2
+const DELAY_START_GAME = 2
 
 function App() {
   const [targetKey, setTargetKey] = useState(null);
   const [targetKeyCache, setTargetKeyCache] = useState(null);
+
   const [keyboardHk, setKeyboardHk] = useState("keyboardTop");
-  const [useKeyboardSide, setUseKeyboardSide] = useState(false);
+  const [useOneKeyboard, setUseOneKeyboard] = useState(true)
+  // TODO: на useRef
+  const useKeyboardSide = useRef(false);
   const [useRandomKey, setUseRandomKey] = useState(false);
   const [keyPressed, setKeyPressed] = useState(null);
 
-  const [pressedKey, setPressedKey] = useState(null);
   const [gameStarted, setGameStarted] = useState(false);
   const [reactionTimes, setReactionTimes] = useState([]);
   const [startTime, setStartTime] = useState(null);
@@ -34,16 +40,15 @@ function App() {
   useEffect(() => {
     const handleKeyPress = (event) => {
       const keyPressed = event.key;
-      setKeyPressed(keyPressed);
-      if (keyboardTop.includes(keyPressed) || (useKeyboardSide && keyPressed.match(/[0-9]/))) {
-        setPressedKey(keyPressed);
+      if (keyboardTop.includes(keyPressed) || (useKeyboardSide.current && keyPressed.match(/[0-9]/))) {
+        setKeyPressed(keyPressed);
         if (keyPressed === targetKey) {
           const reactionTime = Date.now() - startTime;
           setReactionTimes((prev) => [...prev, { attempt: prev.length + 1, time: reactionTime }]);
 
           if (round < COUNT_ROUND - 1) {
             setRound(round + 1);
-            setNextRoundCountdown(5);
+            setNextRoundCountdown(DELAY_NEXT_ROUND);
             setStartTime(Date.now())
           } else {
             setGameStarted(false);
@@ -64,7 +69,7 @@ function App() {
 
   useEffect(() => {
     if (nextRoundCountdown > 0) {
-      if (nextRoundCountdown == 5) {
+      if (nextRoundCountdown == DELAY_NEXT_ROUND) {
         setTargetKey(null);
       }
       setTimeout(() => setNextRoundCountdown(nextRoundCountdown - 1), 1000)
@@ -80,10 +85,19 @@ function App() {
     setTargetKey(null);
 
     let randomKey;
-    if (useKeyboardSide && Math.random() > 0.5) {
-      setKeyboardHk("keyboardSide");
+
+    if (useOneKeyboard) {
+      if (useKeyboardSide.current) {
+        setKeyboardHk("keyboardSide");
+      } else {
+        setKeyboardHk("keyboardTop");
+      }
     } else {
-      setKeyboardHk("keyboardTop");
+      if (useKeyboardSide.current && Math.random() > 0.6) {
+        setKeyboardHk("keyboardSide");
+      } else {
+        setKeyboardHk("keyboardTop");
+      }
     }
 
     if (useRandomKey) {
@@ -95,16 +109,47 @@ function App() {
     if (targetKeyCache == null) {
       setTargetKeyCache(randomKey);
     }
+
     setStartTime(Date.now());
     setKeyPressed(null);
 
   };
 
-  const startGame = () => {
+  const startGame = (levl = 1) => {
+    if (levl == 1) {
+      setUseOneKeyboard(true)
+      useKeyboardSide.current = false;
+      setUseRandomKey(false);
+      setKeyboardHk("keyboardTop");
+    }
+    else if (levl == 2) {
+      setKeyboardHk("keyboardTop");
+      useKeyboardSide.current = false;
+      setUseRandomKey(true);
+      setUseOneKeyboard(true)
+    }
+    else if (levl == 3) {
+      setKeyboardHk("keyboardSide");
+      useKeyboardSide.current = true;
+      setUseRandomKey(false);
+      setUseOneKeyboard(true)
+    }
+    else if (levl == 4) {
+      setKeyboardHk("keyboardSide");
+      useKeyboardSide.current = true;
+      setUseRandomKey(true);
+      setUseOneKeyboard(true)
+    }
+    else if (levl == 5) {
+      setKeyboardHk("keyboardSide");
+      setUseRandomKey(true);
+      useKeyboardSide.current = true;
+      setUseOneKeyboard(false);
+    }
     setReactionTimes([]);
     setRound(0);
     setGameStarted(true);
-    setCountdown(5);
+    setCountdown(DELAY_START_GAME);
 
     const countdownInterval = setInterval(() => {
       setCountdown((prev) => {
@@ -117,35 +162,60 @@ function App() {
     }, 1000);
   };
 
+  console.log(useOneKeyboard)
   return (
     <div style={{ height: "calc(100vh - 100px)", display: "flex", flexDirection: "column", padding: 50, gap: 20 }}>
       <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 20 }}>
         <div style={{ fontSize: 20 }}>Таймер реакции</div>
 
-        <Button type="primary" onClick={startGame} disabled={gameStarted || countdown > 0}>
-          {gameStarted ? 'Игра идёт...' : countdown > 0 ? `Начало через ${countdown}...` : 'Начать игру'}
-        </Button>
-
-        <Button type={useKeyboardSide ? 'primary' : 'default'} onClick={() => setUseKeyboardSide(!useKeyboardSide)} disabled={gameStarted}>
-          {useKeyboardSide ? 'Боковая панель: Включена' : 'Боковая панель: Выключена'}
-        </Button>
-
-        <Button type={useRandomKey ? 'primary' : 'default'} onClick={() => setUseRandomKey(!useRandomKey)} disabled={gameStarted}>
-          {useRandomKey ? 'Случайная клавиша: Включена' : 'Случайная клавиша: Выключена'}
-        </Button>
+        {!gameStarted && <>
+          <Button type="primary" onClick={() => startGame(1)} disabled={gameStarted || countdown > 0}>
+            {'Уровень 1'}
+          </Button>
+          <Button type="primary" onClick={() => startGame(2)} disabled={gameStarted || countdown > 0}>
+            {'Уровень 2'}
+          </Button>
+          <Button type="primary" onClick={() => startGame(3)} disabled={gameStarted || countdown > 0}>
+            {'Уровень 3'}
+          </Button>
+          <Button type="primary" onClick={() => startGame(4)} disabled={gameStarted || countdown > 0}>
+            {'Уровень 4'}
+          </Button>
+          <Button type="primary" onClick={() => startGame(5)} disabled={gameStarted || countdown > 0}>
+            {'Уровень 5'}
+          </Button>
+        </>}
       </div>
 
       {(countdown > 0 || nextRoundCountdown > 0) ? (
+
         <div style={{ fontSize: 30, textAlign: 'center', marginTop: 20 }}>
           {countdown > 0 && (
             <div>
-              Игра начнётся через: <strong>{countdown}</strong> секунд
+              <div style={{ marginBottom: 10 }}>
+                <>Тест начнётся через: {countdown}</>
+              </div>
+              {/* <Progress
+                type="circle"
+                percent={(100 * (DELAY_START_GAME - countdown)) / DELAY_START_GAME}
+                format={() => `${countdown} сек`}
+                strokeColor="#1890ff"
+              /> */}
             </div>
           )}
 
           {nextRoundCountdown > 0 && (
-            <div style={{ fontSize: 24 }}>
-              Следующий раунд через: <strong>{nextRoundCountdown}</strong> секунд
+            <div style={{ fontSize: 24, marginTop: 40 }}>
+              {/* <Progress
+                type="circle"
+                percent={(100 * (DELAY_NEXT_ROUND - nextRoundCountdown + 1)) / DELAY_NEXT_ROUND}
+                format={() => `${nextRoundCountdown} сек`}
+                strokeColor="#1890ff"
+              /> */}
+              <div style={{ marginBottom: 10 }}>
+                <>Тест начнётся через: {nextRoundCountdown}</>
+              </div>
+
             </div>
           )}
         </div>
@@ -155,48 +225,16 @@ function App() {
             <VirtualKeyboard
               targetKey={targetKey}
               keyboardHk={keyboardHk}
-              pressedKey={pressedKey}
-              useKeyboardSide={useKeyboardSide}
+              useKeyboardSide={useKeyboardSide.current}
               keyboardTop={keyboardTop}
               keyboardSide={keyboardSide}
               keyPressed={keyPressed}
+              useOneKeyboard={useOneKeyboard}
             />
           )}
         </>
       )}
-
-
-      {reactionTimes.length > 0 && !gameStarted && (
-        <div style={{ display: 'flex', marginTop: 20, gap: 20 }}>
-          <div style={{ flex: 1 }}>
-            <h3>Результаты времени реакции:</h3>
-            <List
-              bordered
-              dataSource={reactionTimes}
-              renderItem={(item) => (
-                <List.Item>
-                  Попытка {item.attempt}: {item.time} мс
-                </List.Item>
-              )}
-            />
-          </div>
-
-          <div style={{ flex: 1 }}>
-            <h3>График времени реакции:</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={reactionTimes} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="attempt" label={{ value: 'Попытки', position: 'insideBottomRight', offset: -5 }} />
-                <YAxis label={{ value: 'Время (мс)', angle: -90, position: 'insideLeft' }} />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="time" stroke="#1890ff" activeDot={{ r: 8 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      )}
-
+      <Dashboard reactionTimes={reactionTimes} gameStarted={gameStarted}></Dashboard>
     </div>
 
   );
