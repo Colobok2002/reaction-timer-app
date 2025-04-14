@@ -3,19 +3,36 @@ import { Row, Col } from 'antd';
 
 const KeyButton = ({ keyValue, targetKey, keyPressed, keyboardHk, constKeyboardHk }) => {
 
+    let _keyPressed = null;
+    let _keyboardHk = null;
+
+    if (typeof keyPressed === 'string' && keyPressed.includes("__")) {
+        const parts = keyPressed.split("__");
+        if (parts.length === 2) {
+            [_keyPressed, _keyboardHk] = parts;
+        }
+    }
+
     const getBackgroundColor = () => {
+
         if (keyValue === targetKey && keyboardHk === constKeyboardHk) {
             return 'rgba(0, 255, 0, 0.5)';
         }
-        if (keyboardHk === constKeyboardHk) {
 
-            if (keyPressed === keyValue) {
+        if (_keyboardHk != null && _keyboardHk != keyboardHk && _keyPressed == targetKey && _keyboardHk == constKeyboardHk && _keyPressed == keyValue) {
+            return 'rgba(139, 0, 0, 0.5)';
+        }
+
+        if (_keyboardHk === constKeyboardHk) {
+            if (_keyPressed === keyValue) {
                 if (keyValue !== targetKey && targetKey != null) {
                     return 'rgba(139, 0, 0, 0.5)';
                 }
             }
-
         }
+
+        // }
+        // if ()
         return 'rgba(255, 255, 255, 0.1)';
     };
 

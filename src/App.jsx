@@ -40,9 +40,11 @@ function App() {
   useEffect(() => {
     const handleKeyPress = (event) => {
       const keyPressed = event.key;
+
+
       if (keyboardTop.includes(keyPressed) || (useKeyboardSide.current && keyPressed.match(/[0-9]/))) {
-        setKeyPressed(keyPressed);
-        if (keyPressed === targetKey) {
+        setKeyPressed(keyPressed + "__" + (event.code.replace(/[0-9]+$/, '') == "Digit" ? "keyboardTop" : "keyboardSide"));
+        if (keyPressed === targetKey && ((event.code.replace(/[0-9]+$/, '') == "Digit" ? "keyboardTop" : "keyboardSide") == keyboardHk)) {
           const reactionTime = Date.now() - startTime;
           setReactionTimes((prev) => [...prev, { attempt: prev.length + 1, time: reactionTime }]);
 
@@ -85,7 +87,7 @@ function App() {
     setTargetKey(null);
 
     let randomKey;
-
+    console.log(useOneKeyboard)
     if (useOneKeyboard) {
       if (useKeyboardSide.current) {
         setKeyboardHk("keyboardSide");
@@ -123,28 +125,28 @@ function App() {
       setKeyboardHk("keyboardTop");
     }
     else if (levl == 2) {
-      setKeyboardHk("keyboardTop");
       useKeyboardSide.current = false;
       setUseRandomKey(true);
       setUseOneKeyboard(true)
+      setKeyboardHk("keyboardTop");
     }
     else if (levl == 3) {
-      setKeyboardHk("keyboardSide");
       useKeyboardSide.current = true;
       setUseRandomKey(false);
       setUseOneKeyboard(true)
+      setKeyboardHk("keyboardSide");
     }
     else if (levl == 4) {
-      setKeyboardHk("keyboardSide");
       useKeyboardSide.current = true;
       setUseRandomKey(true);
       setUseOneKeyboard(true)
+      setKeyboardHk("keyboardSide");
     }
     else if (levl == 5) {
-      setKeyboardHk("keyboardSide");
       setUseRandomKey(true);
       useKeyboardSide.current = true;
       setUseOneKeyboard(false);
+      setKeyboardHk("keyboardSide");
     }
     setReactionTimes([]);
     setRound(0);
@@ -162,7 +164,6 @@ function App() {
     }, 1000);
   };
 
-  console.log(useOneKeyboard)
   return (
     <div style={{ height: "calc(100vh - 100px)", display: "flex", flexDirection: "column", padding: 50, gap: 20 }}>
       <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 20 }}>
